@@ -66,9 +66,9 @@ df = load_data()
 with st.sidebar:
     st.title("Project Intel")
     st.markdown("---")
-    st.markdown("### 👤 Analyst Info")
-    st.markdown("**Joe San Nicolas**")
-    st.caption("Marketing Science & Analytics Professional")
+    st.markdown("### 👤 Author Info")
+    st.markdown("**Joseph San Nicolas**")
+    st.caption("Analytics Professional")
     # Optional: Add your LinkedIn link
     # st.markdown("[View LinkedIn Profile](https://www.linkedin.com/in/yourprofile)")
     st.markdown("---")
