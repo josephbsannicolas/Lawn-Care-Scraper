@@ -15,18 +15,24 @@ st.markdown("""
     /* Metric Card Styling */
     div[data-testid="stMetric"] {
         background-color: #ffffff;
-        border: 1px solid #d1d5db; 
+        border: 1px solid #cccccc; 
         padding: 15px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         text-align: center;
     }
     
-    /* TARGETED FIX: High-contrast text for metric HEADERS (e.g., Quotes Captured) */
-    /* This ensures they aren't 'washed out' gray on mobile screens */
-    div[data-testid="stMetricLabel"] > div {
-        color: #111827 !important; /* Dark Slate/Black */
-        opacity: 1 !important;     /* Ensure no transparency is washing it out */
+    /* FIX: Force Header (Label) to be dark and visible */
+    div[data-testid="stMetricLabel"] > div > div {
+        color: #333333 !important; 
+        opacity: 1 !important;
+        font-size: 1rem !important;
+    }
+    
+    /* FIX: Force Figure (Value) to be solid black and visible */
+    div[data-testid="stMetricValue"] > div {
+        color: #000000 !important;
+        opacity: 1 !important;
     }
 
     /* Responsive Stacking: Force 1-column on mobile portrait */
@@ -62,7 +68,7 @@ with st.sidebar:
 # --- HEADER: EXECUTIVE SUMMARY ---
 st.title("📊 Competitive Intelligence: Weedman Pricing Strategy")
 
-# Metric cards - headers will now be high-contrast dark text
+# Metric cards - headers and figures are now high-contrast
 m1, m2, m3 = st.columns(3)
 m1.metric("Quotes Captured", f"{len(df):,}")
 m2.metric("Market Footprint", f"{df['cbsa_name'].nunique()} MSAs")
