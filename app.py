@@ -52,41 +52,66 @@ with col2:
 st.divider()
 st.subheader("🧮 Regional Price Predictor")
 
-# 1. INPUT: Changed from Slider to Number Input (Free Text)
-test_size = st.number_input("Enter a Lot Size to Quote (sq ft):", min_value=0, value=5000, step=100)
+# 1. INPUTS: Service Selector and Free Text Lot Size
+pred_col1, pred_col2 = st.columns(2)
 
-# 2. CALCULATION: Create a prediction for EVERY selected MSA
-if len(filtered_df) > 5:  # Need at least a few points for a valid regression
+with pred_col1:
+    # Let them pick a specific service for the prediction
+    prediction_service = st.selectbox(
+        "Select Service to Quote:", 
+        options=df['service_name_group'].unique(),
+        index=0,
+        key="predictor_service_select"
+    )
+
+with pred_col2:
+    # Free text input for Lot Size
+    test_size = st.number_input(
+        "Enter a Lot Size (sq ft):", 
+        min_value=0, 
+        value=5000, 
+        step=500,
+        key="predictor_size_input"
+    )
+
+# 2. CALCULATION: Regression logic for the specific service selected
+# We filter the full dataframe for this service to get the most accurate regional formulas
+pred_df_subset = df[df['service_name_group'] == prediction_service]
+
+if len(pred_df_subset) > 5:
     prediction_results = []
     
-    # We loop through each MSA to find its specific slope/intercept
+    # Calculate formula for each MSA that has data for this specific service
     for msa in selected_msa:
-        msa_data = filtered_df[filtered_df['cbsa_name'] == msa]
+        msa_data = pred_df_subset[pred_df_subset['cbsa_name'] == msa]
         
         if len(msa_data) > 2:
+            # Linear Regression (Cost = Slope * Lot_Size + Intercept)
             z = np.polyfit(msa_data['lot_size'], msa_data['cost'], 1)
             slope, intercept = z[0], z[1]
-            predicted_price = intercept + (slope * test_size)
+            
+            # Ensure we don't show negative prices for tiny lots
+            predicted_price = max(0, intercept + (slope * test_size))
             
             prediction_results.append({
                 "MSA": msa,
                 "Predicted Quote": f"${predicted_price:.2f}",
-                "Base Fee": f"${intercept:.2f}",
-                "Price/sqft": f"${slope:.4f}"
+                "Base Fee (Intercept)": f"${max(0, intercept):.2f}",
+                "Price per sq ft": f"${slope:.4f}"
             })
 
     if prediction_results:
-        st.write(f"**Predicted Quotes for {selected_service} at {test_size:,} sq ft:**")
+        st.write(f"### Results for: **{prediction_service}**")
         
         # Display as a clean, professional table
         predict_df = pd.DataFrame(prediction_results)
         st.table(predict_df)
         
-        st.caption("Note: Base Fee represents the 'trip charge' intercept, while Price/sqft is the variable rate.")
+        st.success(f"Formula found! The data suggests Weedman uses a base trip charge plus a variable rate for {prediction_service}.")
     else:
-        st.warning("Select more MSAs or a service with more data to see regional predictions.")
+        st.warning(f"Not enough data points for **{prediction_service}** in the selected MSAs to build a reliable formula.")
 else:
-    st.info("Gathering more data points will increase the accuracy of these regional formulas.")
+    st.info(f"The dataset for {prediction_service} is currently too small for regression analysis.")
 
 # --- EXPORT SECTION ---
 st.divider()
