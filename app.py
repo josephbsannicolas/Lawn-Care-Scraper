@@ -22,15 +22,21 @@ st.markdown("""
         text-align: center;
     }
     
-    /* FIX: Force Header (Label) to be dark and visible */
-    div[data-testid="stMetricLabel"] > div > div {
-        color: #333333 !important; 
+    /* UNIVERSAL LABEL FIX: Targets the 'Quotes Captured', 'Market Footprint' etc. */
+    /* This overrides Streamlit's gray/transparent mobile labels */
+    [data-testid="stMetricLabel"] {
+        color: #1a1a1a !important;
         opacity: 1 !important;
-        font-size: 1rem !important;
+        visibility: visible !important;
     }
     
-    /* FIX: Force Figure (Value) to be solid black and visible */
-    div[data-testid="stMetricValue"] > div {
+    [data-testid="stMetricLabel"] * {
+        color: #1a1a1a !important;
+        opacity: 1 !important;
+    }
+    
+    /* UNIVERSAL VALUE FIX: Targets the actual numbers */
+    [data-testid="stMetricValue"] {
         color: #000000 !important;
         opacity: 1 !important;
     }
@@ -68,7 +74,7 @@ with st.sidebar:
 # --- HEADER: EXECUTIVE SUMMARY ---
 st.title("📊 Competitive Intelligence: Weedman Pricing Strategy")
 
-# Metric cards - headers and figures are now high-contrast
+# Metric cards - Forced high-contrast labels and values
 m1, m2, m3 = st.columns(3)
 m1.metric("Quotes Captured", f"{len(df):,}")
 m2.metric("Market Footprint", f"{df['cbsa_name'].nunique()} MSAs")
