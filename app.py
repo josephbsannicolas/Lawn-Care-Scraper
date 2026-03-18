@@ -20,83 +20,83 @@ df = load_data()
 # --- MAIN TITLE & SUMMARY CARDS ---
 st.title("🎯 Weedman Pricing Engine: Reverse Engineered")
 
-# DATA SUMMARY ROW
+# DATA SUMMARY ROW (Updated to 3 columns)
 total_quotes = len(df)
 unique_msas = df['cbsa_name'].nunique()
 latest_scrape = df['scrape_timestamp'].max().strftime('%Y-%m-%d')
-earliest_scrape = df['scrape_timestamp'].min().strftime('%Y-%m-%d')
 
-m1, m2, m3, m4 = st.columns(4)
+m1, m2, m3 = st.columns(3)
 m1.metric("Total Quotes Scraped", f"{total_quotes:,}")
 m2.metric("Markets Analyzed", unique_msas)
 m3.metric("Data Recency", latest_scrape)
-m4.metric("Avg. Price (All)", f"${df['cost'].mean():.2f}")
 
 st.markdown("---")
 
-# --- SECTION 1: INDEPENDENT CHARTS ---
-col1, col2 = st.columns(2)
+# --- SECTION 1: PRICING LOGIC (Full Width) ---
+st.subheader("📊 Pricing Logic & Scalability")
+st.caption("Analyze the correlation between property size and quoted cost to uncover the base pricing model.")
 
-# --- LEFT COLUMN: Pricing Logic ---
-with col1:
-    st.subheader("📊 Pricing Logic & Scalability")
-    st.caption("Analyze the correlation between property size and quoted cost.")
-    
+c1_col1, c1_col2 = st.columns(2)
+with c1_col1:
     c1_msa = st.multiselect("Select Markets:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique()[0], key="c1_msa")
+with c1_col2:
     c1_svc = st.selectbox("Select Service:", options=sorted(df['service_name_group'].unique()), key="c1_svc")
-    
-    df_c1 = df[(df['cbsa_name'].isin(c1_msa)) & (df['service_name_group'] == c1_svc)]
-    
-    if not df_c1.empty:
-        fig1 = px.scatter(
-            df_c1, x="lot_size", y="cost", color="cbsa_name", trendline="ols",
-            hover_data=["input_address"],
-            labels={"lot_size": "Lot Size (sq ft)", "cost": "Quote Amount ($)"},
-            template="plotly_white"
-        )
-        st.plotly_chart(fig1, use_container_width=True)
-    else:
-        st.warning("No data for this selection.")
 
-# --- RIGHT COLUMN: Benchmarking ---
-with col2:
-    st.subheader("📈 Regional Price Benchmarking")
-    st.caption("Compare average costs across different geographic MSAs.")
-    
+df_c1 = df[(df['cbsa_name'].isin(c1_msa)) & (df['service_name_group'] == c1_svc)]
+
+if not df_c1.empty:
+    fig1 = px.scatter(
+        df_c1, x="lot_size", y="cost", color="cbsa_name", trendline="ols",
+        hover_data=["input_address"],
+        labels={"lot_size": "Lot Size (sq ft)", "cost": "Quote Amount ($)"},
+        template="plotly_white",
+        height=500 # Taller for full-width view
+    )
+    st.plotly_chart(fig1, use_container_width=True)
+else:
+    st.warning("No data for this selection.")
+
+st.divider()
+
+# --- SECTION 2: REGIONAL BENCHMARKING (Full Width) ---
+st.subheader("📈 Regional Price Benchmarking")
+st.caption("Compare average costs across different geographic MSAs to identify regional multipliers.")
+
+c2_col1, c2_col2 = st.columns(2)
+with c2_col1:
     c2_msa = st.multiselect("Select Markets:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique(), key="c2_msa")
+with c2_col2:
     c2_svc = st.selectbox("Select Service:", options=sorted(df['service_name_group'].unique()), key="c2_svc")
-    
-    df_c2 = df[(df['cbsa_name'].isin(c2_msa)) & (df['service_name_group'] == c2_svc)]
-    
-    if not df_c2.empty:
-        avg_price = df_c2.groupby('cbsa_name')['cost'].mean().reset_index()
-        fig2 = px.bar(avg_price, x='cbsa_name', y='cost', color='cbsa_name', text_auto='.2f', template="plotly_white")
-        st.plotly_chart(fig2, use_container_width=True)
-    else:
-        st.warning("No data for this selection.")
 
-# --- SECTION 2: UNIT ECONOMICS PREDICTOR ---
+df_c2 = df[(df['cbsa_name'].isin(c2_msa)) & (df['service_name_group'] == c2_svc)]
+
+if not df_c2.empty:
+    avg_price = df_c2.groupby('cbsa_name')['cost'].mean().reset_index()
+    fig2 = px.bar(avg_price, x='cbsa_name', y='cost', color='cbsa_name', text_auto='.2f', template="plotly_white", height=500)
+    st.plotly_chart(fig2, use_container_width=True)
+else:
+    st.warning("No data for this selection.")
+
+# --- SECTION 3: UNIT ECONOMICS PREDICTOR ---
 st.divider()
 st.subheader("🧮 Unit Economics Predictor")
 st.info("Calculate predicted quotes based on the mathematical slopes (Linear Regression) found in the dataset.")
 
-pred_col1, pred_col2, pred_col3 = st.columns([1.5, 1.5, 2])
+pred_col1, pred_col2 = st.columns(2)
 
 with pred_col1:
     pred_svc = st.selectbox("Target Service Type:", options=sorted(df['service_name_group'].unique()), key="p_svc")
 
 with pred_col2:
-    pred_msas = st.multiselect("Target Markets to Compare:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique(), key="p_msa")
-
-with pred_col3:
     test_size = st.number_input("Enter Property Size for Quote (sq ft):", min_value=0, value=5000, step=500)
 
-# Prediction Logic
-pred_subset = df[(df['service_name_group'] == pred_svc) & (df['cbsa_name'].isin(pred_msas))]
+# Prediction Logic (Uses all MSAs since individual toggle was removed)
+all_msas = sorted(df['cbsa_name'].unique())
+pred_subset = df[df['service_name_group'] == pred_svc]
 
 if len(pred_subset) > 5:
     res = []
-    for msa in pred_msas:
+    for msa in all_msas:
         m_data = pred_subset[pred_subset['cbsa_name'] == msa]
         if len(m_data) > 2:
             # OLS Regression
@@ -106,14 +106,14 @@ if len(pred_subset) > 5:
                 "Market": msa, 
                 "Predicted Quote": f"${p_price:.2f}", 
                 "Base Trip Fee": f"${max(0, z[1]):.2f}", 
-                "Variable Rate (per sqft)": f"${z[0]:.4f}"
+                "Rate (per sqft)": f"${z[0]:.4f}"
             })
     
     if res:
         predict_df = pd.DataFrame(res)
         st.table(predict_df)
     else:
-        st.warning("Insufficient data in selected markets to generate a formula.")
+        st.warning("Insufficient data across markets to generate formulas for this service.")
 else:
     st.info("The sample size for this service is currently too small for accurate regression modeling.")
 
@@ -123,12 +123,10 @@ st.subheader("📂 Data Portability")
 c_dl1, c_dl2 = st.columns(2)
 
 with c_dl1:
-    # Full CSV Download
     csv_full = df.to_csv(index=False).encode('utf-8')
     st.download_button("Download Full Scraped Dataset (CSV)", csv_full, "weedman_full_analysis.csv", "text/csv")
 
 with c_dl2:
-    # Prediction Results Download
     if 'predict_df' in locals() and not predict_df.empty:
         csv_pred = predict_df.to_csv(index=False).encode('utf-8')
         st.download_button("Download Current Predictions (CSV)", csv_pred, "pricing_predictions.csv", "text/csv")
