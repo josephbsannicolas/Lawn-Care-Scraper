@@ -8,7 +8,7 @@ st.set_page_config(page_title="Weedman Pricing Engine Reverse Engineering", layo
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("/Users/joesannicolas/weedman_scraper/weedman_sample_quotes_clean.csv")
+    df = pd.read_csv("weedman_sample_quotes_clean.csv")
     # Clean up any trailing decimals in lot_size for the UI
     df['lot_size'] = df['lot_size'].astype(int)
     return df
