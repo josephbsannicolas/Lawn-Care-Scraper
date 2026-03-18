@@ -78,26 +78,30 @@ else:
 
 st.divider()
 
-# --- SECTION 2: MARKET BENCHMARKING (Simplified) ---
+# --- SECTION 2: MARKET BENCHMARKING (With Sample Size) ---
 st.header("2. Regional Market Benchmarking")
-st.caption("Average cost comparison across all captured markets.")
+st.caption("Average cost comparison with observation counts (n) for statistical context.")
 
 c2_svc = st.selectbox("Analyze Market Pricing for:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
 
-# This section now automatically includes all markets for the chosen service
 df_c2 = df[df['service_name_group'] == c2_svc]
 
 if not df_c2.empty:
-    avg_price = df_c2.groupby('cbsa_name')['cost'].mean().reset_index().sort_values('cost', ascending=False)
+    # Aggregating Mean and Count
+    bench_data = df_c2.groupby('cbsa_name')['cost'].agg(['mean', 'count']).reset_index()
+    bench_data = bench_data.sort_values('mean', ascending=False)
+    
+    # Create a label that combines the name and the count
+    bench_data['market_label'] = bench_data.apply(lambda x: f"{x['cbsa_name']} (n={x['count']})", axis=1)
     
     fig2 = px.bar(
-        avg_price, x='cost', y='cbsa_name', orientation='h', 
-        color='cost', color_continuous_scale='Greens',
-        text='cost',
+        bench_data, x='mean', y='market_label', orientation='h', 
+        color='mean', color_continuous_scale='Greens',
+        text='mean',
+        labels={'mean': 'Avg Quote', 'market_label': 'Market (Sample Size)'},
         template="plotly_white", height=500
     )
     
-    # Bulletproof currency formatting for data labels
     fig2.update_traces(texttemplate='$%{text:.2f}', textposition='outside')
     
     fig2.update_layout(
