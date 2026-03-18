@@ -15,23 +15,27 @@ st.markdown("""
     /* Metric Card Styling for High Contrast & Mobile */
     div[data-testid="stMetric"] {
         background-color: #ffffff;
-        border: 1px solid #d1d5db; /* Darker border for visibility */
+        border: 2px solid #d1d5db; /* Thicker border for better definition */
         padding: 15px;
         border-radius: 8px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         text-align: center;
     }
     
-    /* High-contrast text for metrics */
-    div[data-testid="stMetricLabel"] {
-        color: #374151 !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
+    /* FIX: High-contrast text for metric HEADERS (e.g., Quotes Captured) */
+    div[data-testid="stMetricLabel"] > div {
+        color: #1f2937 !important; /* Dark Slate Gray */
+        font-weight: 700 !important; /* Bold */
+        font-size: 1.1rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
     }
     
+    /* FIX: High-contrast text for metric VALUES (the numbers) */
     div[data-testid="stMetricValue"] {
-        color: #111827 !important;
-        font-size: 1.8rem !important;
+        color: #000000 !important; /* Pure Black for maximum contrast */
+        font-size: 2rem !important;
+        font-weight: 800 !important;
     }
 
     /* Responsive Stacking: Force 1-column on mobile portrait */
@@ -158,7 +162,6 @@ if not df_c2.empty:
             text='Pricing Index',
             template="plotly_white", height=500
         )
-        # Formatting index labels to 1 decimal place for mobile clarity
         fig2.update_traces(texttemplate='%{text:.1f}', textposition='outside')
         fig2.add_vline(x=100, line_dash="dash", line_color="black", annotation_text=f"Baseline: {baseline_market}")
         
