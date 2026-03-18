@@ -17,7 +17,7 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
-    # Ensure this filename matches your data exactly
+    # Primary Data Load
     df = pd.read_csv("weedman_sample_quotes_clean.csv")
     df['lot_size'] = df['lot_size'].astype(int)
     df['scrape_timestamp'] = pd.to_datetime(df['scrape_timestamp'])
@@ -66,26 +66,34 @@ df_c1 = df[(df['cbsa_name'].isin(c1_msa)) & (df['service_name_group'] == c1_svc)
 
 if not df_c1.empty:
     fig1 = px.scatter(
-        df_c1, x="lot_size", y="cost", color="cbsa_name", trendline="ols",
+        df_c1, x="lot_size", y="total_cost", color="cbsa_name", trendline="ols",
         hover_data=["input_address"],
-        labels={"lot_size": "Lot Size (sq ft)", "cost": "Quote Amount"},
+        labels={"lot_size": "Lot Size (sq ft)", "total_cost": "Quote Amount"},
         template="plotly_white", height=500
     )
-    # FORMAT: Currency on Y-Axis
     fig1.update_layout(yaxis=dict(tickprefix="$", tickformat=",.2f"))
     st.plotly_chart(fig1, use_container_width=True)
 
 st.divider()
 
-# --- SECTION 2: REGIONAL PRICING INDEX (The Dynamic Gap Analysis) ---
+# --- SECTION 2: REGIONAL PRICING INDEX ---
 st.header("2. Regional Pricing Index & Gap Analysis")
-st.caption("Normalized comparison based on a standardized 5,000 sq ft property ($y = mx + b$).")
+
+# --- NEW: HOW TO READ THIS CHART ---
+with st.expander("❓ How to read this Gap Analysis"):
+    st.markdown("""
+    **The Goal:** To compare markets "Apples-to-Apples" regardless of house size.
+    
+    1. **Normalization:** We calculate a quote for a **Standard 5,000 sq ft property** in every city using the pricing engine logic ($y = mx + b$).
+    2. **The Baseline (100):** We set one market (or the average) as the benchmark. Its value is exactly **100.0**.
+    3. **The Index:** * **Above 100:** That market is more expensive than your baseline (e.g., 110.5 = 10.5% higher).
+        * **Below 100:** That market is cheaper than your baseline (e.g., 95.0 = 5% lower).
+    """)
 
 idx_col1, idx_col2 = st.columns([1, 1])
 with idx_col1:
     c2_svc = st.selectbox("Calculate Index for:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
 with idx_col2:
-    # Adding the ability to toggle the 100.0 baseline market
     baseline_options = ["Market Average"] + sorted(df['cbsa_name'].unique().tolist())
     baseline_market = st.selectbox("Select Baseline Market (100.0):", options=baseline_options, key="baseline_market")
 
@@ -95,15 +103,14 @@ if not df_c2.empty:
     index_results = []
     for msa in sorted(df['cbsa_name'].unique()):
         m_data = df_c2[df_c2['cbsa_name'] == msa]
-        if len(m_data) > 3: # Statistical threshold for OLS
-            z = np.polyfit(m_data['lot_size'], m_data['cost'], 1)
+        if len(m_data) > 3: 
+            z = np.polyfit(m_data['lot_size'], m_data['total_cost'], 1)
             std_price = max(0, z[1] + (z[0] * 5000))
             index_results.append({"Market": msa, "Standard Price": std_price, "n": len(m_data)})
     
     if index_results:
         idx_df = pd.DataFrame(index_results)
         
-        # Calculate the dynamic baseline price
         if baseline_market == "Market Average":
             baseline_price = idx_df['Standard Price'].mean()
         else:
@@ -119,7 +126,6 @@ if not df_c2.empty:
             text='Pricing Index',
             template="plotly_white", height=500
         )
-        # FORMAT: Index labels with 1 decimal place
         fig2.update_traces(texttemplate='%{text:.1f}', textposition='outside')
         fig2.add_vline(x=100, line_dash="dash", line_color="black", annotation_text=f"Baseline: {baseline_market}")
         
@@ -128,7 +134,7 @@ if not df_c2.empty:
 
 st.divider()
 
-# --- SECTION 3: UNIT ECONOMICS PREDICTOR & RATE CARD ---
+# --- SECTION 3: UNIT ECONOMICS PREDICTOR ---
 st.header("3. Unit Economics Predictor")
 st.caption("Detailed rate card components reverse-engineered from captured data.")
 
@@ -141,7 +147,7 @@ res = []
 for msa in sorted(df['cbsa_name'].unique()):
     m_data = pred_subset[pred_subset['cbsa_name'] == msa]
     if len(m_data) > 2:
-        z = np.polyfit(m_data['lot_size'], m_data['cost'], 1)
+        z = np.polyfit(m_data['lot_size'], m_data['total_cost'], 1)
         p_price = max(0, z[1] + (z[0] * test_size))
         res.append({
             "Market": msa, 
@@ -164,19 +170,9 @@ st.subheader("📂 Data Access")
 dl_col1, dl_col2 = st.columns(2)
 
 with dl_col1:
-    st.download_button(
-        label="Download Predictions (CSV)",
-        data=predict_df.to_csv(index=False).encode('utf-8'),
-        file_name=f"weedman_predictions_{pred_svc}.csv",
-        mime="text/csv"
-    )
+    st.download_button(label="Download Predictions (CSV)", data=predict_df.to_csv(index=False).encode('utf-8'), file_name=f"weedman_predictions_{pred_svc}.csv", mime="text/csv")
 
 with dl_col2:
-    st.download_button(
-        label="Download Full Scraped Data (CSV)",
-        data=df.to_csv(index=False).encode('utf-8'),
-        file_name="weedman_full_dataset.csv",
-        mime="text/csv"
-    )
+    st.download_button(label="Download Full Scraped Data (CSV)", data=df.to_csv(index=False).encode('utf-8'), file_name="weedman_full_dataset.csv", mime="text/csv")
 
 st.caption("CONFIDENTIAL: For Strategic Review Only")
