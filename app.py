@@ -88,7 +88,8 @@ with st.expander("❓ How to read this Gap Analysis"):
     
     1. **Normalization:** We calculate a quote for a **Standard 5,000 sq ft property** in every city using the pricing engine logic ($y = mx + b$).
     2. **The Baseline (100):** We set one market (or the average) as the benchmark. Its value is exactly **100.0**.
-    3. **The Index:** * **Above 100:** That market is *more expensive* than your baseline (e.g., 110.5 = 10.5% higher).
+    3. **The Index:** 
+        * **Above 100:** That market is *more expensive* than your baseline (e.g., 110.5 = 10.5% higher).
         * **Below 100:** That market is *cheaper* than your baseline (e.g., 95.0 = 5% lower).
     """)
 
