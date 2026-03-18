@@ -6,18 +6,49 @@ import numpy as np
 # 1. PROFESSIONAL THEME & CONFIG
 st.set_page_config(page_title="Market Intel: Weedman Pricing Analysis", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS for a "Premium" look
+# --- MOBILE & CONTRAST OPTIMIZATION CSS ---
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stMetric { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    div[data-testid="stExpander"] { border: none !important; box-shadow: none !important; }
+    /* Main Background */
+    .main { background-color: #fcfcfc; }
+    
+    /* Metric Card Styling for High Contrast & Mobile */
+    div[data-testid="stMetric"] {
+        background-color: #ffffff;
+        border: 1px solid #d1d5db; /* Darker border for visibility */
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    /* High-contrast text for metrics */
+    div[data-testid="stMetricLabel"] {
+        color: #374151 !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+    }
+    
+    div[data-testid="stMetricValue"] {
+        color: #111827 !important;
+        font-size: 1.8rem !important;
+    }
+
+    /* Responsive Stacking: Force 1-column on mobile portrait */
+    @media (max-width: 640px) {
+        div[data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            margin-bottom: 12px;
+        }
+    }
     </style>
     """, unsafe_allow_html=True)
 
 @st.cache_data
 def load_data():
-    # Primary Data Load
+    # Load your specific cleaned CSV
     df = pd.read_csv("weedman_sample_quotes_clean.csv")
     df['lot_size'] = df['lot_size'].astype(int)
     df['scrape_timestamp'] = pd.to_datetime(df['scrape_timestamp'])
@@ -31,16 +62,17 @@ with st.sidebar:
     st.info("""
     **Objective:** Reverse-engineer Weedman’s dynamic pricing engine across key MSAs.
     
-    **Methodology:** * Automated lead generation via Python/Playwright.
-    * Statistical OLS modeling ($y = mx + b$) to isolate fixed vs. variable cost drivers.
+    **Methodology:** * Automated lead gen via Python/Playwright.
+    * OLS Modeling ($y = mx + b$) to isolate fixed vs. variable drivers.
     """)
-    st.caption(f"Last Intelligence Update: {df['scrape_timestamp'].max().strftime('%b %d, %Y')}")
+    st.caption(f"Last Update: {df['scrape_timestamp'].max().strftime('%b %d, %Y')}")
 
 # --- HEADER: EXECUTIVE SUMMARY ---
 st.title("📊 Competitive Intelligence: Weedman Pricing Strategy")
 
+# These will stack on mobile portrait and spread on landscape/desktop
 m1, m2, m3 = st.columns(3)
-m1.metric("Total Quotes Captured", f"{len(df):,}")
+m1.metric("Quotes Captured", f"{len(df):,}")
 m2.metric("Market Footprint", f"{df['cbsa_name'].nunique()} MSAs")
 m3.metric("Data Recency", df['scrape_timestamp'].max().strftime('%Y-%m-%d'))
 
@@ -48,7 +80,7 @@ with st.expander("📝 Strategic Key Takeaways", expanded=True):
     st.markdown("""
     * **Dynamic Indexing:** Switch the 'Baseline Market' to perform a direct gap analysis between specific regions.
     * **Normalization:** Comparisons are based on a 'Standardized 5k sqft Property' to remove bias from varying lot sizes.
-    * **Unit Economics:** The model separates the 'Base Fee' (Fixed) from the 'Variable Rate' (Per sqft) to reveal regional pricing strategies.
+    * **Unit Economics:** The model separates the 'Base Fee' (Fixed) from the 'Variable Rate' (Per sqft).
     """)
 
 st.markdown("---")
@@ -79,16 +111,13 @@ st.divider()
 # --- SECTION 2: REGIONAL PRICING INDEX ---
 st.header("2. Regional Pricing Index & Gap Analysis")
 
-# --- NEW: HOW TO READ THIS CHART ---
-
-# Refined Expander with perfectly nested sub-bullets
 with st.expander("❓ How to read this Gap Analysis"):
     st.markdown("""
     **The Goal:** To compare markets "Apples-to-Apples" regardless of house size.
     
-    1. **Normalization:** We calculate a quote for a **Standard 5,000 sq ft property** in every city using the pricing engine logic ($y = mx + b$).
-    2. **The Baseline (100):** We set one market (or the average) as the benchmark. Its value is exactly **100.0**.
-    3. **The Index:** 
+    1.  **Normalization:** We calculate a quote for a **Standard 5,000 sq ft property** in every city using the pricing engine logic ($y = mx + b$).
+    2.  **The Baseline (100):** We set one market (or the average) as the benchmark. Its value is exactly **100.0**.
+    3.  **The Index:**
         * **Above 100:** That market is *more expensive* than your baseline (e.g., 110.5 = 10.5% higher).
         * **Below 100:** That market is *cheaper* than your baseline (e.g., 95.0 = 5% lower).
     """)
@@ -129,6 +158,7 @@ if not df_c2.empty:
             text='Pricing Index',
             template="plotly_white", height=500
         )
+        # Formatting index labels to 1 decimal place for mobile clarity
         fig2.update_traces(texttemplate='%{text:.1f}', textposition='outside')
         fig2.add_vline(x=100, line_dash="dash", line_color="black", annotation_text=f"Baseline: {baseline_market}")
         
