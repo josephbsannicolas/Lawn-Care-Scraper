@@ -17,6 +17,7 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
+    # Ensure this filename matches your data exactly
     df = pd.read_csv("weedman_sample_quotes_clean.csv")
     df['lot_size'] = df['lot_size'].astype(int)
     df['scrape_timestamp'] = pd.to_datetime(df['scrape_timestamp'])
@@ -31,8 +32,7 @@ with st.sidebar:
     **Objective:** Reverse-engineer Weedman’s dynamic pricing engine across key MSAs.
     
     **Methodology:** * Automated lead generation via Python/Playwright.
-    * Geo-distributed address sampling.
-    * Statistical OLS modeling to isolate fixed vs. variable cost drivers.
+    * Statistical OLS modeling ($y = mx + b$) to isolate fixed vs. variable cost drivers.
     """)
     st.caption(f"Last Intelligence Update: {df['scrape_timestamp'].max().strftime('%b %d, %Y')}")
 
@@ -46,9 +46,9 @@ m3.metric("Data Recency", df['scrape_timestamp'].max().strftime('%Y-%m-%d'))
 
 with st.expander("📝 Strategic Key Takeaways", expanded=True):
     st.markdown("""
-    * **Regional Multipliers:** Significant pricing variance observed between MSAs for identical lot sizes.
-    * **Fixed Cost Floor:** Analysis reveals a consistent 'Base Trip Fee' (Y-Intercept) indicating a minimum service threshold.
-    * **Linear Scalability:** Pricing follows a high-confidence linear model, suggesting a centralized quoting algorithm.
+    * **Dynamic Indexing:** Switch the 'Baseline Market' to perform a direct gap analysis between specific regions.
+    * **Normalization:** Comparisons are based on a 'Standardized 5k sqft Property' to remove bias from varying lot sizes.
+    * **Unit Economics:** The model separates the 'Base Fee' (Fixed) from the 'Variable Rate' (Per sqft) to reveal regional pricing strategies.
     """)
 
 st.markdown("---")
@@ -71,55 +71,66 @@ if not df_c1.empty:
         labels={"lot_size": "Lot Size (sq ft)", "cost": "Quote Amount"},
         template="plotly_white", height=500
     )
+    # FORMAT: Currency on Y-Axis
     fig1.update_layout(yaxis=dict(tickprefix="$", tickformat=",.2f"))
     st.plotly_chart(fig1, use_container_width=True)
-else:
-    st.warning("No data for this selection.")
 
 st.divider()
 
-# --- SECTION 2: MARKET BENCHMARKING (With Sample Size) ---
-st.header("2. Regional Market Benchmarking")
-st.caption("Average cost comparison with observation counts (n) for statistical context.")
+# --- SECTION 2: REGIONAL PRICING INDEX (The Dynamic Gap Analysis) ---
+st.header("2. Regional Pricing Index & Gap Analysis")
+st.caption("Normalized comparison based on a standardized 5,000 sq ft property ($y = mx + b$).")
 
-c2_svc = st.selectbox("Analyze Market Pricing for:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
+idx_col1, idx_col2 = st.columns([1, 1])
+with idx_col1:
+    c2_svc = st.selectbox("Calculate Index for:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
+with idx_col2:
+    # Adding the ability to toggle the 100.0 baseline market
+    baseline_options = ["Market Average"] + sorted(df['cbsa_name'].unique().tolist())
+    baseline_market = st.selectbox("Select Baseline Market (100.0):", options=baseline_options, key="baseline_market")
 
 df_c2 = df[df['service_name_group'] == c2_svc]
 
 if not df_c2.empty:
-    # Aggregating Mean and Count
-    bench_data = df_c2.groupby('cbsa_name')['cost'].agg(['mean', 'count']).reset_index()
-    bench_data = bench_data.sort_values('mean', ascending=False)
+    index_results = []
+    for msa in sorted(df['cbsa_name'].unique()):
+        m_data = df_c2[df_c2['cbsa_name'] == msa]
+        if len(m_data) > 3: # Statistical threshold for OLS
+            z = np.polyfit(m_data['lot_size'], m_data['cost'], 1)
+            std_price = max(0, z[1] + (z[0] * 5000))
+            index_results.append({"Market": msa, "Standard Price": std_price, "n": len(m_data)})
     
-    # Create a label that combines the name and the count
-    bench_data['market_label'] = bench_data.apply(lambda x: f"{x['cbsa_name']} (n={x['count']})", axis=1)
-    
-    fig2 = px.bar(
-        bench_data, x='mean', y='market_label', orientation='h', 
-        color='mean', color_continuous_scale='Greens',
-        text='mean',
-        labels={'mean': 'Avg Quote', 'market_label': 'Market (Sample Size)'},
-        template="plotly_white", height=500
-    )
-    
-    fig2.update_traces(texttemplate='$%{text:.2f}', textposition='outside')
-    
-    fig2.update_layout(
-        showlegend=False, 
-        xaxis=dict(tickprefix="$", tickformat=",.0f"),
-        yaxis_title=None,
-        xaxis_title="Average Quote Amount",
-        margin=dict(r=50) 
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-else:
-    st.warning("No data for this selection.")
+    if index_results:
+        idx_df = pd.DataFrame(index_results)
+        
+        # Calculate the dynamic baseline price
+        if baseline_market == "Market Average":
+            baseline_price = idx_df['Standard Price'].mean()
+        else:
+            baseline_price = idx_df[idx_df['Market'] == baseline_market]['Standard Price'].iloc[0]
+            
+        idx_df['Pricing Index'] = (idx_df['Standard Price'] / baseline_price) * 100
+        idx_df = idx_df.sort_values('Pricing Index', ascending=False)
+        idx_df['label'] = idx_df.apply(lambda x: f"{x['Market']} (n={int(x['n'])})", axis=1)
+
+        fig2 = px.bar(
+            idx_df, x='Pricing Index', y='label', orientation='h',
+            color='Pricing Index', color_continuous_scale='RdYlGn_r',
+            text='Pricing Index',
+            template="plotly_white", height=500
+        )
+        # FORMAT: Index labels with 1 decimal place
+        fig2.update_traces(texttemplate='%{text:.1f}', textposition='outside')
+        fig2.add_vline(x=100, line_dash="dash", line_color="black", annotation_text=f"Baseline: {baseline_market}")
+        
+        fig2.update_layout(showlegend=False, yaxis_title=None, xaxis_title=f"Index (100 = {baseline_market})", margin=dict(r=50))
+        st.plotly_chart(fig2, use_container_width=True)
 
 st.divider()
 
-# --- SECTION 3: THE PREDICTOR ---
+# --- SECTION 3: UNIT ECONOMICS PREDICTOR & RATE CARD ---
 st.header("3. Unit Economics Predictor")
-st.caption("Compare the predicted 'Rate Card' across all available markets simultaneously.")
+st.caption("Detailed rate card components reverse-engineered from captured data.")
 
 p1, p2 = st.columns(2)
 with p1: pred_svc = st.selectbox("Select Service to Quote:", options=sorted(df['service_name_group'].unique()), key="p_svc")
