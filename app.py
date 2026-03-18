@@ -65,6 +65,13 @@ df = load_data()
 # --- SIDEBAR: METHODOLOGY ---
 with st.sidebar:
     st.title("Project Intel")
+    st.markdown("---")
+    st.markdown("### 👤 Analyst Info")
+    st.markdown("**Joe San Nicolas**")
+    st.caption("Marketing Science & Analytics Professional")
+    # Optional: Add your LinkedIn link
+    # st.markdown("[View LinkedIn Profile](https://www.linkedin.com/in/yourprofile)")
+    st.markdown("---")
     st.info("""
     **Objective:** Reverse-engineer Weedman’s dynamic pricing engine across key MSAs.
     **Methodology:** OLS Modeling ($y = mx + b$) to isolate fixed vs. variable drivers.
