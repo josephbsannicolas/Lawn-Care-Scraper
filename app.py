@@ -71,7 +71,6 @@ if not df_c1.empty:
         labels={"lot_size": "Lot Size (sq ft)", "cost": "Quote Amount"},
         template="plotly_white", height=500
     )
-    # FORCED: Currency prefix and comma on Y-axis
     fig1.update_layout(yaxis=dict(tickprefix="$", tickformat=",.2f"))
     st.plotly_chart(fig1, use_container_width=True)
 else:
@@ -79,91 +78,18 @@ else:
 
 st.divider()
 
-# --- SECTION 2: MARKET BENCHMARKING ---
+# --- SECTION 2: MARKET BENCHMARKING (Simplified) ---
 st.header("2. Regional Market Benchmarking")
-c2_col1, c2_col2 = st.columns([1, 3])
+st.caption("Average cost comparison across all captured markets.")
 
-with c2_col1:
-    st.write("### Controls")
-    c2_msa = st.multiselect("Compare Markets:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique(), key="bench_msa")
-    c2_svc = st.selectbox("Service Line:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
+c2_svc = st.selectbox("Analyze Market Pricing for:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
 
-df_c2 = df[(df['cbsa_name'].isin(c2_msa)) & (df['service_name_group'] == c2_svc)]
+# This section now automatically includes all markets for the chosen service
+df_c2 = df[df['service_name_group'] == c2_svc]
 
 if not df_c2.empty:
     avg_price = df_c2.groupby('cbsa_name')['cost'].mean().reset_index().sort_values('cost', ascending=False)
     
-    # FORCED: Defining text and texttemplate explicitly to bypass Plotly's auto-logic
     fig2 = px.bar(
         avg_price, x='cost', y='cbsa_name', orientation='h', 
-        color='cost', color_continuous_scale='Greens',
-        text='cost', # Assigning the cost column to the text property
-        template="plotly_white", height=450
-    )
-    
-    # FORCED: This format string overrides the long decimals specifically
-    fig2.update_traces(texttemplate='$%{text:.2f}', textposition='outside')
-    
-    fig2.update_layout(
-        showlegend=False, 
-        xaxis=dict(tickprefix="$", tickformat=",.0f"),
-        margin=dict(r=50) # Extra room for the labels
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-else:
-    st.warning("No data for this selection.")
-
-st.divider()
-
-# --- SECTION 3: THE PREDICTOR ---
-st.header("3. Unit Economics Predictor")
-st.caption("Compare the predicted 'Rate Card' across all available markets simultaneously.")
-
-p1, p2 = st.columns(2)
-with p1: pred_svc = st.selectbox("Select Service to Quote:", options=sorted(df['service_name_group'].unique()), key="p_svc")
-with p2: test_size = st.number_input("Input Property Size (sq ft):", min_value=0, value=5000, step=500)
-
-pred_subset = df[df['service_name_group'] == pred_svc]
-res = []
-for msa in sorted(df['cbsa_name'].unique()):
-    m_data = pred_subset[pred_subset['cbsa_name'] == msa]
-    if len(m_data) > 2:
-        z = np.polyfit(m_data['lot_size'], m_data['cost'], 1)
-        p_price = max(0, z[1] + (z[0] * test_size))
-        res.append({
-            "Market": msa, 
-            "Predicted Quote": p_price, 
-            "Base Fee (Fixed)": max(0, z[1]), 
-            "Rate (Variable per sqft)": z[0]
-        })
-
-if res:
-    predict_df = pd.DataFrame(res).sort_values("Predicted Quote", ascending=False)
-    disp_df = predict_df.copy()
-    disp_df['Predicted Quote'] = disp_df['Predicted Quote'].map('${:,.2f}'.format)
-    disp_df['Base Fee (Fixed)'] = disp_df['Base Fee (Fixed)'].map('${:,.2f}'.format)
-    disp_df['Rate (Variable per sqft)'] = disp_df['Rate (Variable per sqft)'].map('${:,.4f}'.format)
-    st.table(disp_df)
-
-# --- FOOTER: DATA DOWNLOADS ---
-st.divider()
-st.subheader("📂 Data Access")
-dl_col1, dl_col2 = st.columns(2)
-
-with dl_col1:
-    st.download_button(
-        label="Download Predictions (CSV)",
-        data=predict_df.to_csv(index=False).encode('utf-8'),
-        file_name=f"weedman_predictions_{pred_svc}.csv",
-        mime="text/csv"
-    )
-
-with dl_col2:
-    st.download_button(
-        label="Download Full Scraped Data (CSV)",
-        data=df.to_csv(index=False).encode('utf-8'),
-        file_name="weedman_full_dataset.csv",
-        mime="text/csv"
-    )
-
-st.caption("CONFIDENTIAL: For Strategic Review Only")
+        color='cost', color_continuous_scale='
