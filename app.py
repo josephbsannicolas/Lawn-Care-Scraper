@@ -12,30 +12,21 @@ st.markdown("""
     /* Main Background */
     .main { background-color: #fcfcfc; }
     
-    /* Metric Card Styling for High Contrast & Mobile */
+    /* Metric Card Styling */
     div[data-testid="stMetric"] {
         background-color: #ffffff;
-        border: 2px solid #d1d5db; /* Thicker border for better definition */
+        border: 1px solid #d1d5db; 
         padding: 15px;
         border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         text-align: center;
     }
     
-    /* FIX: High-contrast text for metric HEADERS (e.g., Quotes Captured) */
+    /* TARGETED FIX: High-contrast text for metric HEADERS (e.g., Quotes Captured) */
+    /* This ensures they aren't 'washed out' gray on mobile screens */
     div[data-testid="stMetricLabel"] > div {
-        color: #1f2937 !important; /* Dark Slate Gray */
-        font-weight: 700 !important; /* Bold */
-        font-size: 1.1rem !important;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-    }
-    
-    /* FIX: High-contrast text for metric VALUES (the numbers) */
-    div[data-testid="stMetricValue"] {
-        color: #000000 !important; /* Pure Black for maximum contrast */
-        font-size: 2rem !important;
-        font-weight: 800 !important;
+        color: #111827 !important; /* Dark Slate/Black */
+        opacity: 1 !important;     /* Ensure no transparency is washing it out */
     }
 
     /* Responsive Stacking: Force 1-column on mobile portrait */
@@ -52,7 +43,6 @@ st.markdown("""
 
 @st.cache_data
 def load_data():
-    # Load your specific cleaned CSV
     df = pd.read_csv("weedman_sample_quotes_clean.csv")
     df['lot_size'] = df['lot_size'].astype(int)
     df['scrape_timestamp'] = pd.to_datetime(df['scrape_timestamp'])
@@ -65,16 +55,14 @@ with st.sidebar:
     st.title("Project Intel")
     st.info("""
     **Objective:** Reverse-engineer Weedman’s dynamic pricing engine across key MSAs.
-    
-    **Methodology:** * Automated lead gen via Python/Playwright.
-    * OLS Modeling ($y = mx + b$) to isolate fixed vs. variable drivers.
+    **Methodology:** OLS Modeling ($y = mx + b$) to isolate fixed vs. variable drivers.
     """)
     st.caption(f"Last Update: {df['scrape_timestamp'].max().strftime('%b %d, %Y')}")
 
 # --- HEADER: EXECUTIVE SUMMARY ---
 st.title("📊 Competitive Intelligence: Weedman Pricing Strategy")
 
-# These will stack on mobile portrait and spread on landscape/desktop
+# Metric cards - headers will now be high-contrast dark text
 m1, m2, m3 = st.columns(3)
 m1.metric("Quotes Captured", f"{len(df):,}")
 m2.metric("Market Footprint", f"{df['cbsa_name'].nunique()} MSAs")
