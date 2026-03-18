@@ -12,14 +12,11 @@ st.markdown("""
     .main { background-color: #f8f9fa; }
     .stMetric { background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     div[data-testid="stExpander"] { border: none !important; box-shadow: none !important; }
-    /* Formatting the table for better readability */
-    .stTable { background-color: #ffffff; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
 @st.cache_data
 def load_data():
-    # Ensure this filename matches your GitHub upload exactly
     df = pd.read_csv("weedman_sample_quotes_clean.csv")
     df['lot_size'] = df['lot_size'].astype(int)
     df['scrape_timestamp'] = pd.to_datetime(df['scrape_timestamp'])
@@ -63,7 +60,7 @@ c1_col1, c1_col2 = st.columns([1, 3])
 with c1_col1:
     st.write("### Controls")
     c1_msa = st.multiselect("Focus Markets:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique()[0], key="logic_msa")
-    c1_svc = st.selectbox("Service Line:", options=sorted(df['service_name_group'].unique()), key="logic_svc")
+    c1_svc = st.selectbox("Select Service Line:", options=sorted(df['service_name_group'].unique()), key="logic_svc")
 
 df_c1 = df[(df['cbsa_name'].isin(c1_msa)) & (df['service_name_group'] == c1_svc)]
 
@@ -74,8 +71,8 @@ if not df_c1.empty:
         labels={"lot_size": "Lot Size (sq ft)", "cost": "Quote Amount"},
         template="plotly_white", height=500
     )
-    # FORMAT: Currency on Y-Axis
-    fig1.update_layout(yaxis_tickprefix='$', yaxis_tickformat=',.2f')
+    # FORCED: Currency prefix and comma on Y-axis
+    fig1.update_layout(yaxis=dict(tickprefix="$", tickformat=",.2f"))
     st.plotly_chart(fig1, use_container_width=True)
 else:
     st.warning("No data for this selection.")
@@ -96,15 +93,22 @@ df_c2 = df[(df['cbsa_name'].isin(c2_msa)) & (df['service_name_group'] == c2_svc)
 if not df_c2.empty:
     avg_price = df_c2.groupby('cbsa_name')['cost'].mean().reset_index().sort_values('cost', ascending=False)
     
-    # FIXED: This text_auto format specifically fixes the long decimals in your screenshot
+    # FORCED: Defining text and texttemplate explicitly to bypass Plotly's auto-logic
     fig2 = px.bar(
         avg_price, x='cost', y='cbsa_name', orientation='h', 
         color='cost', color_continuous_scale='Greens',
-        text_auto='$.,2f', 
+        text='cost', # Assigning the cost column to the text property
         template="plotly_white", height=450
     )
-    # FORMAT: Currency on X-Axis
-    fig2.update_layout(showlegend=False, xaxis_tickprefix='$', xaxis_tickformat=',.0f')
+    
+    # FORCED: This format string overrides the long decimals specifically
+    fig2.update_traces(texttemplate='$%{text:.2f}', textposition='outside')
+    
+    fig2.update_layout(
+        showlegend=False, 
+        xaxis=dict(tickprefix="$", tickformat=",.0f"),
+        margin=dict(r=50) # Extra room for the labels
+    )
     st.plotly_chart(fig2, use_container_width=True)
 else:
     st.warning("No data for this selection.")
@@ -135,7 +139,6 @@ for msa in sorted(df['cbsa_name'].unique()):
 
 if res:
     predict_df = pd.DataFrame(res).sort_values("Predicted Quote", ascending=False)
-    # Applying currency formatting to the table display
     disp_df = predict_df.copy()
     disp_df['Predicted Quote'] = disp_df['Predicted Quote'].map('${:,.2f}'.format)
     disp_df['Base Fee (Fixed)'] = disp_df['Base Fee (Fixed)'].map('${:,.2f}'.format)
