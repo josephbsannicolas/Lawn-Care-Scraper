@@ -80,6 +80,8 @@ st.divider()
 st.header("2. Regional Pricing Index & Gap Analysis")
 
 # --- NEW: HOW TO READ THIS CHART ---
+
+# Refined Expander with perfectly nested sub-bullets
 with st.expander("❓ How to read this Gap Analysis"):
     st.markdown("""
     **The Goal:** To compare markets "Apples-to-Apples" regardless of house size.
