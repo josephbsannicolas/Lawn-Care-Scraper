@@ -99,16 +99,41 @@ with st.expander("📝 Strategic Key Takeaways", expanded=True):
 
 st.markdown("---")
 
-# --- SECTION 1: PRICING LOGIC ---
-st.header("1. Pricing Logic & Scalability")
-c1_msa = st.multiselect("Focus Markets:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique()[:2])
-c1_svc = st.selectbox("Select Service Line:", options=sorted(df['service_name_group'].unique()))
+# --- SECTION 1: MARKET RATE STRUCTURE ---
+st.header("1. Market Rate Structure")
+
+# 1. Define the specific default strings
+target_msa = "Nashville-Davidson-Murfreesboro--Franklin, TN"
+target_svc = "Fertilization"
+
+# 2. Update Multiselect: Check if the string exists in your data to avoid errors
+msa_options = sorted(df['cbsa_name'].unique())
+msa_default = [target_msa] if target_msa in msa_options else msa_options[:1]
+
+c1_msa = st.multiselect(
+    "Focus Markets:", 
+    options=msa_options, 
+    default=msa_default
+)
+
+# 3. Update Selectbox: Find the index position of "Fertilization"
+svc_options = sorted(df['service_name_group'].unique())
+try:
+    svc_index = svc_options.index(target_svc)
+except ValueError:
+    svc_index = 0
+
+c1_svc = st.selectbox(
+    "Select Service Line:", 
+    options=svc_options, 
+    index=svc_index
+)
 
 # Filter based on selections
 df_c1 = df[(df['cbsa_name'].isin(c1_msa)) & (df['service_name_group'] == c1_svc)]
 
 if not df_c1.empty:
-    # 1. Calculate the dynamic Price Floor (the minimum quote in the current view)
+    # 1. Calculate the dynamic Price Floor
     dynamic_floor = df_c1['total_cost'].min()
     
     # 2. Build the Scatter Plot
@@ -123,7 +148,7 @@ if not df_c1.empty:
     fig1.add_hline(
         y=dynamic_floor, 
         line_dash="dot", 
-        line_color="#E53935", # Professional Red for a 'Limit' line
+        line_color="#E53935", 
         annotation_text=f"Market Price Floor: ${dynamic_floor:.2f}", 
         annotation_position="bottom right"
     )
