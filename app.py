@@ -228,6 +228,38 @@ if not df_c2.empty:
         fig2.update_layout(showlegend=False, yaxis_title=None, xaxis_title=f"Index (100 = {baseline_market})", margin=dict(r=50))
         st.plotly_chart(fig2, use_container_width=True)
 
+# --- DYNAMIC STRATEGIC INSIGHT SECTION ---
+        st.markdown("---")
+        
+        # 1. Calculate the percentage difference for every row
+        # (Pricing Index - 100) gives us the direct % over/under
+        idx_df['pct_diff'] = idx_df['Pricing Index'] - 100
+        
+        # 2. Separate into Higher and Lower groups (excluding the 0.0% baseline)
+        higher_df = idx_df[idx_df['pct_diff'] > 0.1].sort_values('pct_diff', ascending=False)
+        lower_df = idx_df[idx_df['pct_diff'] < -0.1].sort_values('pct_diff', ascending=True)
+
+        # 3. Build the Individual Market Strings
+        # Example: "Nashville (+5.2%), Memphis (+2.1%)"
+        higher_str = ", ".join([f"{row['Market']} (+{row['pct_diff']:.1f}%)" for _, row in higher_df.iterrows()])
+        lower_str = ", ".join([f"{row['Market']} ({row['pct_diff']:.1f}%)" for _, row in lower_df.iterrows()])
+
+        # 4. Construct the Final Narrative
+        st.subheader("Strategic Insights")
+        
+        insight_body = f"Compared to the **{baseline_market}** baseline:\n\n"
+        
+        if higher_str:
+            insight_body += f"📈 **Premium Priced Markets:** {higher_str}\n\n"
+        
+        if lower_str:
+            insight_body += f"📉 **Value Priced Markets:** {lower_str}\n\n"
+            
+        if not higher_str and not lower_str:
+            insight_body += "All active markets are currently aligned with the selected benchmark."
+
+        st.info(insight_body)
+
 st.divider()
 
 # --- SECTION: MARKET PRICE DISPERSION (HORIZONTAL) ---
