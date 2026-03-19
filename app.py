@@ -177,6 +177,52 @@ if not df_c2.empty:
 
 st.divider()
 
+# --- SECTION 4: MARKET DENSITY HEATMAP ---
+st.header("4. National Price Density Heatmap")
+st.caption("Strategic View: Identifying 'Premium' vs. 'Value' service segments by MSA.")
+
+# 1. Data Prep: Calculate Price per 1k sqft to normalize across markets
+df_heat = df.copy()
+df_heat['price_per_1k'] = (df_heat['total_cost'] / df_heat['lot_size']) * 1000
+
+# 2. Pivot the data for the Heatmap
+heat_pivot = df_heat.pivot_table(
+    index='cbsa_name', 
+    columns='service_name_group', 
+    values='price_per_1k', 
+    aggfunc='mean'
+).round(2)
+
+if not heat_pivot.empty:
+    fig_heat = px.imshow(
+        heat_pivot,
+        labels=dict(x="Service Line", y="Market (MSA)", color="Price / 1k sqft"),
+        x=heat_pivot.columns,
+        y=heat_pivot.index,
+        color_continuous_scale="YlOrRd", # Yellow to Red (Higher price = Redder)
+        text_auto=True, # Shows the dollar values inside the cells
+        aspect="auto",
+        template="plotly_white",
+        height=600
+    )
+
+    fig_heat.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        coloraxis_colorbar=dict(title="$ / 1k sqft"),
+    )
+    
+    st.plotly_chart(fig_heat, use_container_width=True)
+
+with st.expander("💡 How to use this Heatmap for Strategy"):
+    st.markdown("""
+    * **Identify Overpricing:** Cells in **Dark Red** indicate where the competitor has high pricing power. These are your prime "Customer Conquest" targets.
+    * **Identify Loss Leaders:** Cells in **Light Yellow** show where they might be underpricing a service to gain market share.
+    * **Consistency Check:** If one MSA is red across all services, they are running a 'Premium' brand strategy there. If it's mixed, they are likely reacting to local labor costs or specific local competitors.
+    """)
+
+st.divider()
+
 # --- SECTION 3: UNIT ECONOMICS PREDICTOR ---
 st.header("3. Unit Economics Predictor")
 st.caption("Detailed rate card components reverse-engineered from captured data.")
