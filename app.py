@@ -173,9 +173,9 @@ else:
 st.divider()
 
 # --- SECTION 2: REGIONAL PRICING INDEX ---
-st.header("2. Regional Pricing Index & Gap Analysis")
+st.header("2. Market Rate Index")
 
-with st.expander("❓ How to read this Gap Analysis"):
+with st.expander("❓ How to read this Index Analysis"):
     st.markdown("""
     **The Goal:** To compare markets "Apples-to-Apples" regardless of house size.
     
@@ -188,10 +188,10 @@ with st.expander("❓ How to read this Gap Analysis"):
 
 idx_col1, idx_col2 = st.columns([1, 1])
 with idx_col1:
-    c2_svc = st.selectbox("Calculate Index for:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
+    c2_svc = st.selectbox("Service Line:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
 with idx_col2:
     baseline_options = ["Market Average"] + sorted(df['cbsa_name'].unique().tolist())
-    baseline_market = st.selectbox("Select Baseline Market (100.0):", options=baseline_options, key="baseline_market")
+    baseline_market = st.selectbox("Baseline Market (100.0):", options=baseline_options, key="baseline_market")
 
 df_c2 = df[df['service_name_group'] == c2_svc]
 
