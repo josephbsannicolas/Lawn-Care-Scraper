@@ -245,9 +245,8 @@ if not df_c2.empty:
         lower_str = ", ".join([f"{row['Market']} ({row['pct_diff']:.1f}%)" for _, row in lower_df.iterrows()])
 
         # 4. Construct the Final Narrative
-        st.subheader("Strategic Insights")
         
-        insight_body = f"Compared to the **{baseline_market}** baseline:\n\n"
+        insight_body = f"**Strategic Insight:**Compared to the **{baseline_market}** baseline:\n\n"
         
         if higher_str:
             insight_body += f"📈 **Premium Priced Markets:** {higher_str}\n\n"
