@@ -177,42 +177,47 @@ if not df_c2.empty:
 
 st.divider()
 
-# --- SECTION 5: MARKET PRICE DISPERSION ---
-st.header("5. Regional Price Variance Analysis")
-st.caption("Statistical distribution of raw quotes by Metropolitan Statistical Area.")
+# --- SECTION: MARKET PRICE DISPERSION (HORIZONTAL) ---
+st.header("3. Price Distribution Analysis")
+st.markdown("### Regional Variance & Range")
 
-# Filtering for the most common service to keep the 'story' simple
-disp_svc = st.selectbox("Select Service for Distribution Analysis:", 
-                        options=sorted(df['service_name_group'].unique()), 
-                        key="disp_svc_select")
+# Using the existing service selection from your sidebar or previous section
+# If you don't have c2_svc defined yet, uncomment the line below:
+# c2_svc = st.selectbox("Select Service for Distribution:", options=sorted(df['service_name_group'].unique()))
 
-df_disp = df[df['service_name_group'] == disp_svc]
+df_disp = df[df['service_name_group'] == c2_svc]
 
-fig_disp = px.box(
-    df_disp, 
-    x="cbsa_name", 
-    y="total_cost", 
-    color="cbsa_name",
-    points="outliers", # Shows exactly what we filtered/kept
-    notched=True, # Shows confidence interval around the median
-    labels={"cbsa_name": "Market", "total_cost": "Quote Amount ($)"},
-    template="plotly_white",
-    height=500
-)
+if not df_disp.empty:
+    fig_disp = px.box(
+        df_disp, 
+        y="cbsa_name",  # Market on Y-axis for horizontal layout
+        x="total_cost", # Price on X-axis
+        color_discrete_sequence=["#2E7D32"], # Professional Forest Green
+        points="outliers", # Show the specific noisy points we discussed
+        labels={
+            "cbsa_name": "Market", 
+            "total_cost": "Quote Amount ($)"
+        },
+        template="plotly_white",
+        height=600 # Taller height helps with long market lists
+    )
 
-fig_disp.update_layout(
-    showlegend=False,
-    xaxis_title=None,
-    yaxis_tickprefix="$"
-)
+    # Clean up the layout for a corporate feel
+    fig_disp.update_layout(
+        xaxis_tickprefix="$",
+        yaxis_title=None,
+        xaxis_title="Observed Quote Price Range",
+        margin=dict(l=20, r=20, t=20, b=20)
+    )
+    
+    # Force the chart to be fully visible on mobile
+    st.plotly_chart(fig_disp, use_container_width=True)
 
-st.plotly_chart(fig_disp, use_container_width=True)
-
-with st.expander("📝 Strategic Insights for the VP"):
+with st.expander("📝 Strategic Interpretation of Distribution"):
     st.markdown("""
-    * **Pricing Discipline:** Narrow boxes indicate a highly automated, disciplined pricing engine. 
-    * **Market Volatility:** Wide boxes (like Knoxville) suggest non-standardized pricing or high geographic variability.
-    * **Outlier Identification:** The individual dots represent properties that defy standard logic—useful for identifying 'edge cases' in our own pricing model.
+    * **Median Line:** Represents the 'typical' market price. 
+    * **Box Width:** Shows the Middle 50% of the market. A **tight box** indicates a highly automated, disciplined competitor.
+    * **Whiskers & Dots:** Identify the range and 'Edge Cases'—useful for spotting where the competitor's pricing logic breaks down.
     """)
 
 st.divider()
