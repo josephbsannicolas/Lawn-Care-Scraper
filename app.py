@@ -6,6 +6,9 @@ import numpy as np
 # 1. PROFESSIONAL THEME & CONFIG
 st.set_page_config(page_title="Market Intel: Weedman Pricing Analysis", layout="wide", initial_sidebar_state="expanded")
 
+# Define the professional green palette at the top of the script
+GREEN_PALETTE = ["#1B5E20", "#388E3C", "#66BB6A", "#A5D6A7", "#C8E6C9"]
+
 # --- MOBILE & CONTRAST OPTIMIZATION CSS ---
 st.markdown("""
     <style>
