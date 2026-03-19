@@ -98,24 +98,49 @@ st.markdown("---")
 
 # --- SECTION 1: PRICING LOGIC ---
 st.header("1. Pricing Logic & Scalability")
-c1_col1, c1_col2 = st.columns([1, 3])
+c1_msa = st.multiselect("Focus Markets:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique()[:2])
+c1_svc = st.selectbox("Select Service Line:", options=sorted(df['service_name_group'].unique()))
 
-with c1_col1:
-    st.write("### Controls")
-    c1_msa = st.multiselect("Focus Markets:", options=sorted(df['cbsa_name'].unique()), default=df['cbsa_name'].unique()[0], key="logic_msa")
-    c1_svc = st.selectbox("Select Service Line:", options=sorted(df['service_name_group'].unique()), key="logic_svc")
-
+# Filter based on selections
 df_c1 = df[(df['cbsa_name'].isin(c1_msa)) & (df['service_name_group'] == c1_svc)]
 
 if not df_c1.empty:
+    # 1. Calculate the dynamic Price Floor (the minimum quote in the current view)
+    dynamic_floor = df_c1['total_cost'].min()
+    
+    # 2. Build the Scatter Plot
     fig1 = px.scatter(
         df_c1, x="lot_size", y="total_cost", color="cbsa_name", trendline="ols",
-        hover_data=["input_address"],
-        labels={"lot_size": "Lot Size (sq ft)", "total_cost": "Quote Amount"},
+        color_discrete_sequence=GREEN_PALETTE,
+        labels={"lot_size": "Lot Size (sq ft)", "total_cost": "Quote Amount ($)"},
         template="plotly_white", height=500
     )
-    fig1.update_layout(yaxis=dict(tickprefix="$", tickformat=",.2f"))
+
+    # 3. Add the Horizontal Price Floor Line
+    fig1.add_hline(
+        y=dynamic_floor, 
+        line_dash="dot", 
+        line_color="#E53935", # Professional Red for a 'Limit' line
+        annotation_text=f"Market Price Floor: ${dynamic_floor:.2f}", 
+        annotation_position="bottom right"
+    )
+
+    # 4. Clean up layout
+    fig1.update_layout(
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        yaxis_tickprefix="$"
+    )
+    
     st.plotly_chart(fig1, use_container_width=True)
+    
+    # 5. Strategic "Aha" Insight
+    st.info(f"""
+    **Strategic Insight:** In the selected markets, the competitor has a hard price floor at **${dynamic_floor:.2f}**. 
+    Any pricing logic below this point is overridden to protect minimum service margins.
+    """)
+
+else:
+    st.warning("Please select at least one market to view the pricing logic.")
 
 st.divider()
 
