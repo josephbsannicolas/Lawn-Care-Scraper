@@ -232,21 +232,18 @@ if not df_c2.empty:
         st.markdown("---")
         
         # 1. Calculate the percentage difference for every row
-        # (Pricing Index - 100) gives us the direct % over/under
         idx_df['pct_diff'] = idx_df['Pricing Index'] - 100
         
-        # 2. Separate into Higher and Lower groups (excluding the 0.0% baseline)
+        # 2. Separate into Higher and Lower groups
         higher_df = idx_df[idx_df['pct_diff'] > 0.1].sort_values('pct_diff', ascending=False)
         lower_df = idx_df[idx_df['pct_diff'] < -0.1].sort_values('pct_diff', ascending=True)
 
         # 3. Build the Individual Market Strings
-        # Example: "Nashville (+5.2%), Memphis (+2.1%)"
         higher_str = ", ".join([f"{row['Market']} (+{row['pct_diff']:.1f}%)" for _, row in higher_df.iterrows()])
         lower_str = ", ".join([f"{row['Market']} ({row['pct_diff']:.1f}%)" for _, row in lower_df.iterrows()])
 
-        # 4. Construct the Final Narrative
-        
-        insight_body = f"**Strategic Insight:**Compared to the **{baseline_market}** baseline:\n\n"
+        # 4. Construct the Final Narrative (Bolded, No Asterisks)
+        insight_body = f"**Strategic Insight:** Compared to the **{baseline_market}** baseline:\n\n"
         
         if higher_str:
             insight_body += f"📈 **Premium Priced Markets:** {higher_str}\n\n"
@@ -257,6 +254,7 @@ if not df_c2.empty:
         if not higher_str and not lower_str:
             insight_body += "All active markets are currently aligned with the selected benchmark."
 
+        # Display inside the blue info box
         st.info(insight_body)
 
 st.divider()
