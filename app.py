@@ -111,7 +111,7 @@ msa_options = sorted(df['cbsa_name'].unique())
 msa_default = [target_msa] if target_msa in msa_options else msa_options[:1]
 
 c1_msa = st.multiselect(
-    "Focus Markets:", 
+    "Market:", 
     options=msa_options, 
     default=msa_default
 )
@@ -124,7 +124,7 @@ except ValueError:
     svc_index = 0
 
 c1_svc = st.selectbox(
-    "Select Service Line:", 
+    "Service Line:", 
     options=svc_options, 
     index=svc_index
 )
@@ -229,8 +229,7 @@ if not df_c2.empty:
         st.plotly_chart(fig2, use_container_width=True)
 
 # --- DYNAMIC STRATEGIC INSIGHT SECTION ---
-        st.markdown("---")
-        
+
         # 1. Calculate the percentage difference for every row
         idx_df['pct_diff'] = idx_df['Pricing Index'] - 100
         
@@ -257,60 +256,6 @@ if not df_c2.empty:
         # Display inside the blue info box
         st.info(insight_body)
 
-st.divider()
-
-# --- SECTION: MARKET PRICE DISPERSION (HORIZONTAL) ---
-st.header("3. Price Distribution Analysis")
-st.markdown("### Regional Variance & Range")
-
-# 1. Local Toggle for this section
-c3_svc = st.selectbox(
-    "Filter Distribution by Service Line:", 
-    options=sorted(df['service_name_group'].unique()), 
-    key="box_svc_toggle"
-)
-
-# 2. Filter data
-df_disp = df[df['service_name_group'] == c3_svc].copy()
-
-if not df_disp.empty:
-    # 3. PRE-CALCULATE OBSERVATIONS: Create the 'Market (n=XX)' labels
-    counts = df_disp['cbsa_name'].value_counts().to_dict()
-    df_disp['market_with_n'] = df_disp['cbsa_name'].apply(lambda x: f"{x} (n={counts.get(x, 0)})")
-
-    # 4. Create the Horizontal Box Plot using the new labels
-    fig_disp = px.box(
-        df_disp, 
-        y="market_with_n",       # Now using the label with observation counts
-        x="total_cost",          # Price on X-axis
-        color_discrete_sequence=["#2E7D32"], # Professional Green
-        points="outliers",       
-        labels={
-            "market_with_n": "Market (Sample Size)", 
-            "total_cost": "Quote Amount ($)"
-        },
-        template="plotly_white",
-        height=600
-    )
-
-    # 5. Professional Layout Adjustments
-    fig_disp.update_layout(
-        xaxis_tickprefix="$",
-        yaxis_title=None,
-        xaxis_title=f"Price Distribution: {c3_svc}",
-        margin=dict(l=10, r=20, t=10, b=10),
-        yaxis={'categoryorder':'total ascending'} # Optional: Sorts by price for cleaner look
-    )
-    
-    # Update hover template for clarity
-    fig_disp.update_traces(hovertemplate="<b>Market:</b> %{y}<br><b>Price:</b> $%{x:.2f}")
-
-    st.plotly_chart(fig_disp, use_container_width=True)
-    
-    st.caption(f"Total observations for {c3_svc}: {len(df_disp):,}")
-
-else:
-    st.warning(f"No data available for {c3_svc}.")
 st.divider()
 
 # --- SECTION 3: UNIT ECONOMICS PREDICTOR ---
