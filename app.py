@@ -103,7 +103,7 @@ st.markdown("---")
 st.header("1. Market Rate Structure")
 
 # 1. Define the specific default strings
-target_msa = "Nashville-Davidson-Murfreesboro--Franklin, TN"
+target_msa = "Nashville-Davidson--Murfreesboro--Franklin, TN"
 target_svc = "Fertilization"
 
 # 2. Update Multiselect: Check if the string exists in your data to avoid errors
