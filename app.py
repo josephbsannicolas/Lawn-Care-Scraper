@@ -181,43 +181,57 @@ st.divider()
 st.header("3. Price Distribution Analysis")
 st.markdown("### Regional Variance & Range")
 
-# Using the existing service selection from your sidebar or previous section
-# If you don't have c2_svc defined yet, uncomment the line below:
-# c2_svc = st.selectbox("Select Service for Distribution:", options=sorted(df['service_name_group'].unique()))
+# 1. Local Toggle for this section only
+c3_svc = st.selectbox(
+    "Filter Distribution by Service Line:", 
+    options=sorted(df['service_name_group'].unique()), 
+    key="box_svc_toggle"
+)
 
-df_disp = df[df['service_name_group'] == c2_svc]
+# 2. Filter data based on toggle
+df_disp = df[df['service_name_group'] == c3_svc]
 
 if not df_disp.empty:
+    # 3. Create the Horizontal Box Plot
     fig_disp = px.box(
         df_disp, 
-        y="cbsa_name",  # Market on Y-axis for horizontal layout
-        x="total_cost", # Price on X-axis
-        color_discrete_sequence=["#2E7D32"], # Professional Forest Green
-        points="outliers", # Show the specific noisy points we discussed
+        y="cbsa_name",           # Market on Y-axis for horizontal labels
+        x="total_cost",          # Price on X-axis
+        color_discrete_sequence=["#2E7D32"], # Lawn Care Green
+        points="outliers",       # Show the 'noise' dots we discussed
         labels={
-            "cbsa_name": "Market", 
+            "cbsa_name": "Market (MSA)", 
             "total_cost": "Quote Amount ($)"
         },
         template="plotly_white",
-        height=600 # Taller height helps with long market lists
+        height=600
     )
 
-    # Clean up the layout for a corporate feel
+    # 4. Professional Layout Adjustments
     fig_disp.update_layout(
         xaxis_tickprefix="$",
         yaxis_title=None,
-        xaxis_title="Observed Quote Price Range",
-        margin=dict(l=20, r=20, t=20, b=20)
+        xaxis_title=f"Price Distribution: {c3_svc}",
+        margin=dict(l=10, r=20, t=10, b=10),
+        hovermode="closest"
     )
     
-    # Force the chart to be fully visible on mobile
+    # Update hover template to be clean for recruiters
+    fig_disp.update_traces(hovertemplate="<b>Market:</b> %{y}<br><b>Price:</b> $%{x:.2f}")
+
     st.plotly_chart(fig_disp, use_container_width=True)
+    
+    # 5. Data Integrity Footer
+    st.caption(f"Currently analyzing {len(df_disp):,} unique observations for {c3_svc} across all markets.")
+
+else:
+    st.warning(f"No data available for {c3_svc}. Please check your source file.")
 
 with st.expander("📝 Strategic Interpretation of Distribution"):
     st.markdown("""
-    * **Median Line:** Represents the 'typical' market price. 
-    * **Box Width:** Shows the Middle 50% of the market. A **tight box** indicates a highly automated, disciplined competitor.
-    * **Whiskers & Dots:** Identify the range and 'Edge Cases'—useful for spotting where the competitor's pricing logic breaks down.
+    * **Median Line (Center):** The most common price point the competitor hits.
+    * **Box Width (Interquartile Range):** Shows where 50% of the market lives. A **tight box** indicates a highly automated pricing engine with little room for negotiation.
+    * **Whiskers & Dots:** Identify the range and 'Edge Cases'—useful for identifying where the competitor's pricing logic breaks down or where they are over-quoting high-value properties.
     """)
 
 st.divider()
