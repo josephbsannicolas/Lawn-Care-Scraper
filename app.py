@@ -177,48 +177,42 @@ if not df_c2.empty:
 
 st.divider()
 
-# --- SECTION 4: MARKET DENSITY HEATMAP ---
-st.header("4. National Price Density Heatmap")
-st.caption("Strategic View: Identifying 'Premium' vs. 'Value' service segments by MSA.")
+# --- SECTION 5: MARKET PRICE DISPERSION ---
+st.header("5. Regional Price Variance Analysis")
+st.caption("Statistical distribution of raw quotes by Metropolitan Statistical Area.")
 
-# 1. Data Prep: Calculate Price per 1k sqft to normalize across markets
-df_heat = df.copy()
-df_heat['price_per_1k'] = (df_heat['total_cost'] / df_heat['lot_size']) * 1000
+# Filtering for the most common service to keep the 'story' simple
+disp_svc = st.selectbox("Select Service for Distribution Analysis:", 
+                        options=sorted(df['service_name_group'].unique()), 
+                        key="disp_svc_select")
 
-# 2. Pivot the data for the Heatmap
-heat_pivot = df_heat.pivot_table(
-    index='cbsa_name', 
-    columns='service_name_group', 
-    values='price_per_1k', 
-    aggfunc='mean'
-).round(2)
+df_disp = df[df['service_name_group'] == disp_svc]
 
-if not heat_pivot.empty:
-    fig_heat = px.imshow(
-        heat_pivot,
-        labels=dict(x="Service Line", y="Market (MSA)", color="Price / 1k sqft"),
-        x=heat_pivot.columns,
-        y=heat_pivot.index,
-        color_continuous_scale="YlOrRd", # Yellow to Red (Higher price = Redder)
-        text_auto=True, # Shows the dollar values inside the cells
-        aspect="auto",
-        template="plotly_white",
-        height=600
-    )
+fig_disp = px.box(
+    df_disp, 
+    x="cbsa_name", 
+    y="total_cost", 
+    color="cbsa_name",
+    points="outliers", # Shows exactly what we filtered/kept
+    notched=True, # Shows confidence interval around the median
+    labels={"cbsa_name": "Market", "total_cost": "Quote Amount ($)"},
+    template="plotly_white",
+    height=500
+)
 
-    fig_heat.update_layout(
-        xaxis_title=None,
-        yaxis_title=None,
-        coloraxis_colorbar=dict(title="$ / 1k sqft"),
-    )
-    
-    st.plotly_chart(fig_heat, use_container_width=True)
+fig_disp.update_layout(
+    showlegend=False,
+    xaxis_title=None,
+    yaxis_tickprefix="$"
+)
 
-with st.expander("💡 How to use this Heatmap for Strategy"):
+st.plotly_chart(fig_disp, use_container_width=True)
+
+with st.expander("📝 Strategic Insights for the VP"):
     st.markdown("""
-    * **Identify Overpricing:** Cells in **Dark Red** indicate where the competitor has high pricing power. These are your prime "Customer Conquest" targets.
-    * **Identify Loss Leaders:** Cells in **Light Yellow** show where they might be underpricing a service to gain market share.
-    * **Consistency Check:** If one MSA is red across all services, they are running a 'Premium' brand strategy there. If it's mixed, they are likely reacting to local labor costs or specific local competitors.
+    * **Pricing Discipline:** Narrow boxes indicate a highly automated, disciplined pricing engine. 
+    * **Market Volatility:** Wide boxes (like Knoxville) suggest non-standardized pricing or high geographic variability.
+    * **Outlier Identification:** The individual dots represent properties that defy standard logic—useful for identifying 'edge cases' in our own pricing model.
     """)
 
 st.divider()
