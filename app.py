@@ -140,7 +140,7 @@ if not df_c1.empty:
     fig1 = px.scatter(
         df_c1, x="lot_size", y="total_cost", color="cbsa_name", trendline="ols",
         color_discrete_sequence=GREEN_PALETTE,
-        labels={"lot_size": "Lot Size (sq ft)", "total_cost": "Quote Amount ($)"},
+        labels={"lot_size": "Lot Size (sq ft)", "total_cost": "Quote Amount ($ per application)"},
         template="plotly_white", height=500
     )
 
