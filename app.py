@@ -202,6 +202,12 @@ with st.expander("❓ How to read this Index Analysis"):
 
 idx_col1, idx_col2 = st.columns([1, 1])
 with idx_col1:
+    # --- ADDED DEFAULT LOGIC ---
+    idx_svc_options = sorted(df['service_name_group'].unique())
+    try:
+        idx_fert_index = idx_svc_options.index("Fertilization")
+    except ValueError:
+        idx_fert_index = 0
     c2_svc = st.selectbox("Service Line:", options=sorted(df['service_name_group'].unique()), key="bench_svc")
 with idx_col2:
     baseline_options = ["Market Average"] + sorted(df['cbsa_name'].unique().tolist())
@@ -277,7 +283,14 @@ st.header("3. Unit Economics Predictor")
 st.caption("Detailed rate card components reverse-engineered from captured data.")
 
 p1, p2 = st.columns(2)
-with p1: pred_svc = st.selectbox("Service Line:", options=sorted(df['service_name_group'].unique()), key="p_svc")
+with p1: 
+# --- ADDED DEFAULT LOGIC ---
+    pred_svc_options = sorted(df['service_name_group'].unique())
+    try:
+        pred_fert_index = pred_svc_options.index("Fertilization")
+    except ValueError:
+        pred_fert_index = 0
+    pred_svc = st.selectbox("Service Line:", options=sorted(df['service_name_group'].unique()), key="p_svc")
 with p2: test_size = st.number_input("Property Size (sq ft):", min_value=0, value=5000, step=500)
 
 pred_subset = df[df['service_name_group'] == pred_svc]
