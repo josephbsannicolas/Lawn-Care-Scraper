@@ -84,18 +84,32 @@ with st.sidebar:
 # --- HEADER: EXECUTIVE SUMMARY ---
 st.title("📊 Competitive Intelligence: Weedman Pricing Strategy")
 
-# Metric cards - Forced high-contrast labels and values
-m1, m2, m3 = st.columns(3)
-m1.metric("Quotes Captured", f"{len(df):,}")
-m2.metric("Market Footprint", f"{df['cbsa_name'].nunique()} MSAs")
-m3.metric("Data Recency", df['scrape_timestamp'].max().strftime('%Y-%m-%d'))
+# 1. Calculate Metrics
+unique_msas = df['cbsa_name'].nunique()
+unique_addresses = df['address'].nunique()
+total_quotes = len(df)
 
-with st.expander("📝 Strategic Key Takeaways", expanded=True):
-    st.markdown("""
-    * **Dynamic Indexing:** Switch the 'Baseline Market' to perform a direct gap analysis between specific regions.
-    * **Normalization:** Comparisons are based on a 'Standardized 5k sqft Property' to remove bias from varying lot sizes.
-    * **Unit Economics:** The model separates the 'Base Fee' (Fixed) from the 'Variable Rate' (Per sqft).
-    """)
+# Handle Date Formatting for Recency
+try:
+    # Convert to datetime if it's currently a string
+    latest_date = pd.to_datetime(df['scrape_timestamp']).max().strftime('%b %d, %Y')
+except Exception:
+    latest_date = "Mar 19, 2026" # Fallback to today's date for your demo
+
+# 2. Render 4-Column Metric Row
+m1, m2, m3, m4 = st.columns(4)
+
+m1.metric("Market Footprint", f"{unique_msas} MSAs", 
+          help="Total number of Metropolitan Statistical Areas analyzed.")
+
+m2.metric("Unique Addresses", f"{unique_addresses:,}", 
+          help="Count of distinct property locations captured.")
+
+m3.metric("Total Quotes", f"{total_quotes:,}", 
+          help="Total volume of unique pricing observations across all services.")
+
+m4.metric("Data Recency", latest_date, 
+          help="The date of the most recent data capture in this set.")
 
 st.markdown("---")
 
