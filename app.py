@@ -263,8 +263,8 @@ st.header("3. Unit Economics Predictor")
 st.caption("Detailed rate card components reverse-engineered from captured data.")
 
 p1, p2 = st.columns(2)
-with p1: pred_svc = st.selectbox("Select Service to Quote:", options=sorted(df['service_name_group'].unique()), key="p_svc")
-with p2: test_size = st.number_input("Input Property Size (sq ft):", min_value=0, value=5000, step=500)
+with p1: pred_svc = st.selectbox("Service Line:", options=sorted(df['service_name_group'].unique()), key="p_svc")
+with p2: test_size = st.number_input("Property Size (sq ft):", min_value=0, value=5000, step=500)
 
 pred_subset = df[df['service_name_group'] == pred_svc]
 res = []
