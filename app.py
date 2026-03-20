@@ -86,7 +86,7 @@ st.title("📊 Competitive Intelligence: Weedman Pricing Strategy")
 
 # 1. Calculate Metrics
 unique_msas = df['cbsa_name'].nunique()
-unique_addresses = df['address'].nunique()
+unique_addresses = df['input_address'].nunique()
 total_quotes = len(df)
 
 # Handle Date Formatting for Recency
