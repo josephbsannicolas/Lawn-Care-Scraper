@@ -288,7 +288,7 @@ if not df_c2.empty:
 st.divider()
 
 # --- SECTION 3: UNIT ECONOMICS PREDICTOR ---
-st.header("3. Unit Economics Predictor")
+st.header("3. Quote Predictor")
 st.caption("Detailed rate card components reverse-engineered from captured data.")
 
 p1, p2 = st.columns(2)
