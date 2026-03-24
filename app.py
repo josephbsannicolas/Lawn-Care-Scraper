@@ -289,7 +289,6 @@ st.divider()
 
 # --- SECTION 3: UNIT ECONOMICS PREDICTOR ---
 st.header("3. Quote Predictor")
-st.caption("Detailed rate card components reverse-engineered from captured data.")
 
 p1, p2 = st.columns(2)
 with p1:
@@ -322,7 +321,7 @@ for msa in sorted(df['cbsa_name'].unique()):
             "Market": msa, 
             "Predicted Quote": p_price, 
             "Base Fee (Fixed)": max(0, z[1]), 
-            "Rate (Variable per sqft)": z[0]
+            "Rate (Variable per sq ft)": z[0]
         })
 
 if res:
