@@ -329,7 +329,7 @@ if res:
     disp_df = predict_df.copy()
     disp_df['Predicted Quote'] = disp_df['Predicted Quote'].map('${:,.2f}'.format)
     disp_df['Base Fee (Fixed)'] = disp_df['Base Fee (Fixed)'].map('${:,.2f}'.format)
-    disp_df['Rate (Variable per sqft)'] = disp_df['Rate (Variable per sqft)'].map('${:,.4f}'.format)
+    disp_df['Rate (Variable per sq ft)'] = disp_df['Rate (Variable per sq ft)'].map('${:,.4f}'.format)
     st.table(disp_df)
 
 # --- FOOTER: DATA DOWNLOADS ---
