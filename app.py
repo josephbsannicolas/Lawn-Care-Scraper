@@ -82,7 +82,7 @@ with st.sidebar:
     st.caption(f"Last Update: {df['scrape_timestamp'].max().strftime('%b %d, %Y')}")
 
 # --- HEADER: EXECUTIVE SUMMARY ---
-st.title("📊 Competitive Intelligence: Weedman Pricing Strategy")
+st.title("📊 Competitive Intelligence: Weed Man Pricing Strategy")
 
 # 1. Calculate Metrics
 unique_msas = df['cbsa_name'].nunique()
